@@ -24,24 +24,41 @@ export class AppComponent implements OnInit {
 
   text: string = '';
   licenseDetails: any = null;
+  liveData: string = 'data here';
+  imageData: string = 'image';
 
   async startDecoding() {
     try {
       // Access the camera
-      this.videoStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
-      this.videoElement.nativeElement.srcObject = this.videoStream;
-      this.isDecoding = true;
+      // this.videoStream = await navigator.mediaDevices.getUserMedia({
+      //   video: true,
+      // });
+      // this.videoElement.nativeElement.srcObject = this.videoStream;
+      // this.isDecoding = true;
 
-      // Start processing frames
+      // // Start processing frames
+      // Check if the device is a mobile phone
+      const isMobile = /iPhone|Android|iPad|iPod/i.test(navigator.userAgent);
+
+      // Set constraints
+      const constraints: MediaStreamConstraints = {
+        video: isMobile
+          ? { facingMode: { exact: 'environment' } } // Try to use back camera
+          : true, // Default video constraints for other devices
+      };
+
+      // Request video stream
+      this.videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Set the video stream to the video element
+      this.videoElement.nativeElement.srcObject = this.videoStream;
       this.processFrames();
     } catch (error) {
       console.error('Error accessing camera:', error);
     }
   }
 
-  processFrames() {
+  async processFrames() {
     const video = this.videoElement.nativeElement;
     const canvas = this.canvasElement.nativeElement;
     const context = canvas.getContext('2d');
@@ -51,7 +68,7 @@ export class AppComponent implements OnInit {
       return;
     }
 
-    this.decodingInterval = setInterval(() => {
+    this.decodingInterval = setInterval(async () => {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
@@ -63,8 +80,21 @@ export class AppComponent implements OnInit {
 
       console.log(imageData);
 
+      this.imageData = imageData.colorSpace;
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/png')
+      );
+
+      if (!blob) {
+        throw new Error('Failed to convert canvas to Blob');
+      }
+
+      // Create a File object from the Blob
+      const file = new File([blob], 'frame.png', { type: 'image/png' });
+
       // Run your decoding logic
-      const result = this.scanBarcode(imageData);
+      const result = this.scanBarcode(file);
 
       console.log(result);
 
@@ -99,6 +129,8 @@ export class AppComponent implements OnInit {
     };
 
     const imageFileReadResults: any = await readBarcodes(file, readerOptions);
+
+    this.liveData = imageFileReadResults;
 
     if (imageFileReadResults[0]?.text) {
       this.text = imageFileReadResults[0]?.text;

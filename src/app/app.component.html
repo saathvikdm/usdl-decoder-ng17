@@ -1,15 +1,15 @@
 <main class="main">
   <div class="content">
-    <!-- <div><p>Select DL</p><input type="file" (change)="onFileSelected($event)" /></div> -->
+    <!-- <div>{{ liveData }}</div>
+    <div>{{ imageData }}</div> -->
     <div>
-      <video #video autoplay playsinline muted></video>
+      <video #video autoplay playsinline muted style="width: 75vw"></video>
       <canvas #canvas hidden></canvas>
       <button (click)="startDecoding()" *ngIf="!isDecoding">
         Start Decoding
       </button>
       <button (click)="stopDecoding()" *ngIf="isDecoding">Stop Decoding</button>
     </div>
-    <!-- <p>Decoded Text:</p><br> -->
     <div class="decoded">
       <div style="max-width: 50%; margin-left: 1.5em; padding: 0.5em">
         <p>{{ licenseDetails }}</p>
